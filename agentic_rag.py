@@ -69,6 +69,7 @@ agent_storage_file: str = "tmp/agent_storage.db"
 memory_db = SqliteMemoryDb(
     table_name="study_memory",
     db_file="tmp/agent_memory.db",
+
 )
 
 def get_agentic_rag_agent(
