@@ -1,0 +1,15 @@
+agno
+streamlit
+nest_asyncio
+openai
+pgvector
+psycopg2-binary
+pypdf
+psycopg[binary]
+sqlalchemy
+uvicorn
+beautifulsoup4
+chromadb
+groq
+google-genai
+anthropic
