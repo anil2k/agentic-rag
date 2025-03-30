@@ -16,3 +16,4 @@ anthropic
 duckduckgo-search
 lancedb
 python-dotenv
+tantivy
