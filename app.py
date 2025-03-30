@@ -15,6 +15,11 @@ from agno.document.reader.pdf_reader import PDFReader
 from agno.document.reader.text_reader import TextReader
 from agno.document.reader.website_reader import WebsiteReader
 from agno.utils.log import logger
+import os 
+
+directory = "tmp"
+os.makedirs(directory, exist_ok=True)
+
 from utils import (
     CUSTOM_CSS,
     about_widget,
