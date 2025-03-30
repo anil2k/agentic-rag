@@ -1,33 +1,3 @@
-"""🤖 Agentic RAG Agent - Your AI Knowledge Assistant!
-
-This advanced example shows how to build a sophisticated RAG (Retrieval Augmented Generation) system that
-leverages vector search and LLMs to provide deep insights from any knowledge base.
-
-The agent can:
-- Process and understand documents from multiple sources (PDFs, websites, text files)
-- Build a searchable knowledge base using vector embeddings
-- Maintain conversation context and memory across sessions
-- Provide relevant citations and sources for its responses
-- Generate summaries and extract key insights
-- Answer follow-up questions and clarifications
-
-Example queries to try:
-- "What are the key points from this document?"
-- "Can you summarize the main arguments and supporting evidence?"
-- "What are the important statistics and findings?"
-- "How does this relate to [topic X]?"
-- "What are the limitations or gaps in this analysis?"
-- "Can you explain [concept X] in more detail?"
-- "What other sources support or contradict these claims?"
-
-The agent uses:
-- Vector similarity search for relevant document retrieval
-- Conversation memory for contextual responses
-- Citation tracking for source attribution
-- Dynamic knowledge base updates
-
-View the README for instructions on how to run the application.
-"""
 
 from typing import Optional
 
@@ -42,10 +12,10 @@ from agno.models.openai import OpenAIChat
 from agno.models.groq import Groq
 from agno.storage.agent.postgres import PostgresAgentStorage
 from agno.storage.agent.sqlite import SqliteAgentStorage
-from agno.tools.duckduckgo import DuckDuckGoTools
+# from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.vectordb.pgvector import PgVector
 # from agno.vectordb.chroma import ChromaVectorDb
-from agno.vectordb.lancedb import LanceDb, SearchType
+# from agno.vectordb.lancedb import LanceDb, SearchType
 
 # Agent memory
 from agno.memory.manager import MemoryManager
@@ -63,14 +33,10 @@ load_dotenv()
 model_gemini=Gemini(id="gemini-2.0-flash", )
 embedder_gemini=GeminiEmbedder()
 
+# postgres database
 # db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
-agent_memory_file: str = "tmp/agent_memory.db"
-agent_storage_file: str = "tmp/agent_storage.db"
-memory_db = SqliteMemoryDb(
-    table_name="study_memory",
-    db_file="tmp/agent_memory.db",
+db_url = "postgresql+psycopg2://ai:ai@db:5432/ai" # both db and be in docker
 
-)
 
 def get_agentic_rag_agent(
     # model_id: str = "openai:gpt-4o",
@@ -95,17 +61,12 @@ def get_agentic_rag_agent(
         model = Groq(id=model_name)
     else:
         raise ValueError(f"Unsupported model provider: {provider}")
+    
+    
     # Define persistent memory for chat history
     
-    # memory = AgentMemory(
-    #     db=PgMemoryDb(
-    #         table_name="agent_memory", db_url=db_url
-    #     ),  # Persist memory in Postgres
-    #     create_user_memories=True,  # Store user preferences
-    #     create_session_summary=True,  # Store conversation summaries
-    # )
-
-    memory=AgentMemory(
+    memory_db=PgMemoryDb(table_name="agent_memory", db_url=db_url)
+    memory = AgentMemory(
             db=memory_db,
             create_user_memories=True,
             update_user_memories_after_run=True,
@@ -120,37 +81,64 @@ def get_agentic_rag_agent(
                 db=memory_db,
                 user_id=user_id,
             ),)
+    storage=PostgresAgentStorage(
+            table_name="agentic_rag_agent_sessions", db_url=db_url
+        )  # Persist session data
+
+
+    # # sql database
+    # agent_memory_file: str = "tmp/agent_memory.db"
+    # agent_storage_file: str = "tmp/agent_storage.db"
+    # memory_db = SqliteMemoryDb(
+    #     table_name="study_memory",
+    #     db_file=agent_memory_file,)
+
+    # memory=AgentMemory(
+    #         db=memory_db,
+    #         create_user_memories=True,
+    #         update_user_memories_after_run=True,
+    #         classifier=MemoryClassifier(
+    #             model=model_gemini,
+    #         ),
+    #         summarizer=MemorySummarizer(
+    #             model=model_gemini,
+    #         ),
+    #         manager=MemoryManager(
+    #             model=model_gemini,
+    #             db=memory_db,
+    #             user_id=user_id,
+    #         ),)
+    # storage=SqliteAgentStorage(table_name="agentic_rag_agent_sessions", db_file=agent_storage_file)
+    
 
     # Define the knowledge base
     knowledge_base = AgentKnowledge(
         
-        # vector_db=PgVector(
-        #     db_url=db_url,
-        #     table_name="agentic_rag_documents",
-        #     schema="ai",
-        #     embedder=OpenAIEmbedder(id="text-embedding-ada-002", dimensions=1536),
-        # ),
-        
-        vector_db=LanceDb(
-            uri="tmp/lancedb",
-            table_name="recipes",
-            search_type=SearchType.hybrid,
+        vector_db=PgVector(
+            db_url=db_url,
+            table_name="agentic_rag_documents",
+            schema="ai",
             embedder=GeminiEmbedder(),
         ),
+        
+        # vector_db=LanceDb(
+        #     uri="tmp/lancedb",
+        #     table_name="recipes",
+        #     search_type=SearchType.hybrid,
+        #     embedder=GeminiEmbedder(),
+        # ),
         
         num_documents=3,  # Retrieve 3 most relevant documents
     )
 
+    
     # Create the Agent
     agentic_rag_agent: Agent = Agent(
         name="agentic_rag_agent",
         session_id=session_id,  # Track session ID for persistent conversations
         user_id=user_id,
         model=model,
-        # storage=PostgresAgentStorage(
-        #     table_name="agentic_rag_agent_sessions", db_url=db_url
-        # ),  # Persist session data
-        storage=SqliteAgentStorage(table_name="agentic_rag_agent_sessions", db_file=agent_storage_file),
+        storage=storage, # Persist session data
         memory=memory,  # Add memory to the agent
         knowledge=knowledge_base,  # Add knowledge base
         description="You are a helpful Agent called 'Agentic RAG' and your goal is to assist the user in the best way possible.",
@@ -190,7 +178,7 @@ def get_agentic_rag_agent(
         ],
         search_knowledge=True,  # This setting gives the model a tool to search the knowledge base for information
         read_chat_history=True,  # This setting gives the model a tool to get chat history
-        tools=[DuckDuckGoTools()],
+        # tools=[DuckDuckGoTools()],
         markdown=True,  # This setting tellss the model to format messages in markdown
         # add_chat_history_to_messages=True,
         # add_history_to_messages=True,
@@ -203,3 +191,8 @@ def get_agentic_rag_agent(
     )
 
     return agentic_rag_agent
+
+if __name__ == "__main__":
+    agent = get_agentic_rag_agent()
+    replay=agent.run("hello")
+    print(replay.content)

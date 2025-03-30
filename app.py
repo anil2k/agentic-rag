@@ -15,17 +15,12 @@ from agno.document.reader.pdf_reader import PDFReader
 from agno.document.reader.text_reader import TextReader
 from agno.document.reader.website_reader import WebsiteReader
 from agno.utils.log import logger
-import os 
-
-directory = "tmp"
-os.makedirs(directory, exist_ok=True)
-
 from utils import (
     CUSTOM_CSS,
-    about_widget,
+    # about_widget,
     add_message,
     display_tool_calls,
-    export_chat_history,
+    # export_chat_history,
     rename_session_widget,
     session_selector_widget,
 )
@@ -87,7 +82,7 @@ def main():
     ####################################################################
     st.markdown("<h1 class='main-title'>Agentic RAG </h1>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='subtitle'>Your intelligent research assistant powered by Agno</p>",
+        "<p class='subtitle'>Your intelligent research assistant</p>",
         unsafe_allow_html=True,
     )
 
@@ -206,26 +201,26 @@ def main():
         else:
             st.sidebar.info("URL already loaded in knowledge base")
 
-    uploaded_file = st.sidebar.file_uploader(
-        "Add a Document (.pdf, .csv, or .txt)", key="file_upload"
-    )
-    if (
-        uploaded_file and not prompt and not st.session_state.knowledge_base_initialized
-    ):  # Only load if KB not initialized
-        file_identifier = f"{uploaded_file.name}_{uploaded_file.size}"
-        if file_identifier not in st.session_state.loaded_files:
-            alert = st.sidebar.info("Processing document...", icon="ℹ️")
-            file_type = uploaded_file.name.split(".")[-1].lower()
-            reader = get_reader(file_type)
-            if reader:
-                docs = reader.read(uploaded_file)
-                agentic_rag_agent.knowledge.load_documents(docs, upsert=True)
-                st.session_state.loaded_files.add(file_identifier)
-                st.sidebar.success(f"{uploaded_file.name} added to knowledge base")
-                st.session_state.knowledge_base_initialized = True
-            alert.empty()
-        else:
-            st.sidebar.info(f"{uploaded_file.name} already loaded in knowledge base")
+    # uploaded_file = st.sidebar.file_uploader(
+    #     "Add a Document (.pdf, .csv, or .txt)", key="file_upload"
+    # )
+    # if (
+    #     uploaded_file and not prompt and not st.session_state.knowledge_base_initialized
+    # ):  # Only load if KB not initialized
+    #     file_identifier = f"{uploaded_file.name}_{uploaded_file.size}"
+    #     if file_identifier not in st.session_state.loaded_files:
+    #         alert = st.sidebar.info("Processing document...", icon="ℹ️")
+    #         file_type = uploaded_file.name.split(".")[-1].lower()
+    #         reader = get_reader(file_type)
+    #         if reader:
+    #             docs = reader.read(uploaded_file)
+    #             agentic_rag_agent.knowledge.load_documents(docs, upsert=True)
+    #             st.session_state.loaded_files.add(file_identifier)
+    #             st.sidebar.success(f"{uploaded_file.name} added to knowledge base")
+    #             st.session_state.knowledge_base_initialized = True
+    #         alert.empty()
+    #     else:
+    #         st.sidebar.info(f"{uploaded_file.name} already loaded in knowledge base")
 
     if st.sidebar.button("Clear Knowledge Base"):
         agentic_rag_agent.knowledge.vector_db.delete()
@@ -322,7 +317,7 @@ def main():
     ####################################################################
     # About section
     ####################################################################
-    about_widget()
+    # about_widget()
 
 
 main()
