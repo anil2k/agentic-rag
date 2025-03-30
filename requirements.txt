@@ -13,3 +13,4 @@ chromadb
 groq
 google-genai
 anthropic
+duckduckgo-search
